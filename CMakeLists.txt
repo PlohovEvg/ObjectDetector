@@ -11,9 +11,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 add_subdirectory(3rdparty/gtest)
 
+file(GLOB MAIN "main.cpp")
+
 add_definitions(-DDATA_FOLDER="${PROJECT_SOURCE_DIR}/data")
+file(GLOB SOURCES "detector/*.cpp")
+if (SOURCES)
+	add_library(module_${module_name} STATIC ${SOURCES} ${MAIN})
+	target_include_directories(module_${module_name} PUBLIC "${module}/include")
+	target_link_libraries(module_${module_name} PUBLIC ${OpenCV_LIBRARIES} ${InferenceEngine_LIBRARIES})
+endif()
 
-file(GLOB CPPS "*.cpp")
-file(GLOB DET "detector/*")
 
-add_executable(${PROJECT_NAME} ${CPPS} ${DET})
