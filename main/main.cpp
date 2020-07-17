@@ -108,6 +108,7 @@ int main()
 			Mat A = Mat::zeros(200, 50, CV_8U);
 			namedWindow("text", WINDOW_NORMAL);
 			putText(A, "GAME OVER!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
+			break;
 		}
 	}
 	return 0;
