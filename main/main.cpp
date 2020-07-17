@@ -60,8 +60,8 @@ int main()
 		if (score == max_score)
 		{
 			Mat A = Mat::zeros(200, 50, CV_8U);
-			namedWindow("img", WINDOW_NORMAL);
-			putText(A, "YOU WIN!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 5, Scalar(0, 255, 0));
+			namedWindow("text", WINDOW_NORMAL);
+			putText(A, "YOU WIN!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
 			break;
 		}
 
@@ -102,6 +102,12 @@ int main()
 		if (Iou >= IOUthresh)
 		{
 			score++;
+		}
+		else
+		{
+			Mat A = Mat::zeros(200, 50, CV_8U);
+			namedWindow("text", WINDOW_NORMAL);
+			putText(A, "GAME OVER!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
 		}
 	}
 	return 0;
