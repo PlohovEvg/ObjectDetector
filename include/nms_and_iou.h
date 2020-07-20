@@ -3,8 +3,10 @@
 #include <opencv2/core/utils/filesystem.hpp>
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
 
 using namespace cv;
+using namespace std;
 using namespace cv::utils::fs;
 
 float iou(const cv::Rect& a, const cv::Rect& b);

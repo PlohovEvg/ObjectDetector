@@ -1,8 +1,11 @@
 #include "nms_and_iou.h"
 
+
 int xTL, yTL, xBR, yBR;
 bool flag = false;
+float Iou;
 Rect r;
+Rect chosen_box;
 
 void onMouse(int event, int x, int y, int flags, void *userdata)
 {
@@ -25,6 +28,7 @@ void onMouse(int event, int x, int y, int flags, void *userdata)
 		xBR = x;
 		yBR = y;
 		r = Rect(xTL, yTL, xBR - xTL, yBR - yTL);
+		Iou = iou(r, chosen_box);
 		flag = false;
 		break;
 	}
@@ -35,7 +39,6 @@ int main()
 	int n; //Set n value
 	int max_score; //Set max_score value
 	float IOUthresh = 0.9f;
-	float Iou;
 	int ran, boxran;
 	unsigned chosen_class;
 	int score = 0;
@@ -46,7 +49,6 @@ int main()
 	std::vector<unsigned> classes;
 	Mat chosen_pic;
 	Mat copy;
-	Rect chosen_box;
 
 	for (int i = 0; i < n; i++)
 	{
@@ -60,11 +62,12 @@ int main()
 		if (score == max_score)
 		{
 			Mat A = Mat::zeros(200, 50, CV_8U);
-			namedWindow("text", WINDOW_NORMAL);
+			namedWindow("You win!", WINDOW_NORMAL);
 			putText(A, "YOU WIN!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
 			break;
 		}
 
+		Iou = -1.0f;
 		boxes.clear();
 		classes.clear();
 		probs.clear();
@@ -90,23 +93,22 @@ int main()
 			rectangle(copy, r, Scalar(0, 0, 255));
 			imshow("img", copy);
 			char key = waitKey(30);
-			//Ask user to press enter
-			if (key == 13)
+
+			if (Iou != -1.0f)
 			{
 				break;
-			}
+			}						
 		}
-
-		Iou = iou(r, chosen_box);
 
 		if (Iou >= IOUthresh)
 		{
 			score++;
+			cout << "current score:" << score << "  target score:" << max_score << endl;
 		}
 		else
 		{
 			Mat A = Mat::zeros(200, 50, CV_8U);
-			namedWindow("text", WINDOW_NORMAL);
+			namedWindow("Game over!", WINDOW_NORMAL);
 			putText(A, "GAME OVER!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
 			break;
 		}
