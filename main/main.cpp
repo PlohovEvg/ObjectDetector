@@ -11,6 +11,7 @@ using namespace cv;
 using namespace std;
 
 float Iou;
+Rect r;
 Rect chosen_box;
 
 
@@ -23,7 +24,7 @@ struct Region {
     int move;
 }chosen;
 
-static void CallBackF(int event, int x, int y, int flags, void* img) {
+static void onMouse(int event, int x, int y, int flags, void* img) {
     if (event == EVENT_RBUTTONDOWN) {
         chosen.click = 0;
         //cout << "right down " << endl;
@@ -36,102 +37,92 @@ static void CallBackF(int event, int x, int y, int flags, void* img) {
         //cout << "left down" << endl;
         return;
     }
-    if (event == EVENT_LBUTTONUP) {
-        chosen.X2 = x;
-        chosen.Y2 = y;
-        chosen.click = 2;
-        chosen.move = 0;
-        //cout << "left up" << endl;
+    if (event == EVENT_MOUSEMOVE) {
+        if (chosen.click == 1) {
+            chosen.X2 = x;
+            chosen.Y2 = y;
+            r = Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1);
+            //cout << "left up" << endl;
+        }
         return;
     }
-    if (event == EVENT_MOUSEMOVE) {
+    if (event == EVENT_LBUTTONUP) {
         //cout << "move" << endl;
         chosen.X2 = x;
         chosen.Y2 = y;
-        chosen.move++;
+        r = Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1);
+        Iou = iou(r, chosen_box);
+        chosen.click = 0;
         return;
     }
 }
 
-int main(){
-    //int n; //Set n value
-    //int max_score; //Set max_score value
-    chosen.click = 0;
-    chosen.move = 0;
-
+int main() {
+    const int n = 1; //Set n value
+    const int max_score = 5; //Set max_score value
     float IOUthresh = 0.9f;
     int ran, boxran;
     unsigned chosen_class;
     int score = 0;
     int counter = 0;
-    //std::vector<Mat> images(n);
+    std::vector<Mat> images;
     std::vector<Rect> boxes;
     std::vector<float> probs;
     std::vector<unsigned> classes;
     Mat chosen_pic;
     Mat copy;
-    std::vector<Mat> images;
-    string s;
-    int k = 1;
-    
-	//srand(time(NULL));
 
-	for (int i = 0; i < 5; i++){
-		if (score == 5){
-			Mat A = Mat::zeros(200, 50, CV_8U);
-			namedWindow("You win!", WINDOW_NORMAL);
-			putText(A, "YOU WIN!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
-			break;
-		}
+    for (int i = 0; i < 1; i++) {
+        images.push_back(imread(join(DATA_FOLDER, to_string(i + 1) + ".jpg")));
+    }
+    //srand(time(NULL));
+    for (int i = 0; i < 1; i++) {
+        //if (score == max_score) {
+        //    Mat A = Mat::zeros(200, 50, CV_8U);
+        //    namedWindow("You win!", WINDOW_NORMAL);
+        //    putText(A, "YOU WIN!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
+        //    break;
+        //}
+        //Iou = -1.0f;
+        //boxes.clear();
+        //classes.clear();
+        //probs.clear();
 
-		//Iou = -1.0f;
-		//boxes.clear();
-		//classes.clear();
-		//probs.clear();
+        //ran = rand() % (n + 1 - counter);
+        //counter++;
+        //chosen_pic = images[ran];
+        //images.erase(images.begin() + (ran - 1));
 
-		//ran = i;
-		//chosen_pic = images[ran];
-		//images.erase(images.begin() + i);
+        ////Detect objects on chosen_pic
 
-		////Detect objects on chosen_pic
+        //boxran = rand() % boxes.size();
+        //chosen_class = classes[boxran];
+        //chosen_box = boxes[boxran];
 
-		//boxran = rand() % boxes.size();
-		//chosen_class = classes[boxran];
-		//chosen_box = boxes[boxran];
-        s = to_string(k);
-        Mat img;
-        img = imread(join(DATA_FOLDER, s + ".jpg"));
-		//Ask user to highlight chosen object
-        k++;
+        chosen_pic = images[i];
+        namedWindow("img", WINDOW_NORMAL);
+        setMouseCallback("img", onMouse);
         while (1) {
-            img = imread(join(DATA_FOLDER, s + ".jpg"));
-            Mat im = img.clone();
-            namedWindow("image", WINDOW_AUTOSIZE);
-            setMouseCallback("image", CallBackF, 0);
-
-            if (chosen.click == 1) {
-                rectangle(img, Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1), Scalar(0, 0, 255), 2, 15);
-            }
-            else if (chosen.click == 2 && chosen.move == 1) {
-                Rect rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1);
-                boxes.push_back(rect);
-            }
-
-            imshow("image", img);
-            const int key = cv::waitKey(27);
+            chosen_pic.copyTo(copy);
+            rectangle(copy, r, Scalar(0, 0, 255));
+            imshow("img", copy);
+            char key = waitKey(30);
             if (key == 27)break;
-        }
 
-		if (Iou >= IOUthresh){
-			score++;
-			cout << "current score:" << score << "  target score:" << 5 << endl;
-		}
-		else{
-			Mat A = Mat::zeros(200, 50, CV_8U);
-			namedWindow("Game over!", WINDOW_NORMAL);
-			putText(A, "GAME OVER!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
-			break;
-		}
-	}
-	return 0;
+            /*if (Iou != -1.0f) {
+                break;
+            }*/
+        }
+        /*if (Iou >= IOUthresh) {
+            score++;
+            cout << "current score:" << score << "  target score:" << max_score << endl;
+        }
+        else {
+            Mat A = Mat::zeros(200, 50, CV_8U);
+            namedWindow("Game over!", WINDOW_NORMAL);
+            putText(A, "GAME OVER!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
+            break;
+        }*/
+    }
+    return 0;
 }

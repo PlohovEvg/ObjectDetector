@@ -4,12 +4,15 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <inference_engine.hpp>
 
 using namespace cv;
 using namespace std;
 using namespace cv::utils::fs;
+using namespace InferenceEngine;
 
-float iou(const cv::Rect& a, const cv::Rect& b);
 
-void nms(const std::vector<cv::Rect>& boxes, const std::vector<float>& probabilities,
-	float threshold, std::vector<unsigned>& indices);
+float iou(const Rect& a, const Rect& b);
+
+void nms(const vector<Rect>& boxes, const vector<float>& probabilities,
+	float threshold, vector<unsigned>& indices);

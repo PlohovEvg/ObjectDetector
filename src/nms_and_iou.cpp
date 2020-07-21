@@ -1,55 +1,41 @@
 #include "nms_and_iou.h"
 
-float iou(const cv::Rect& a, const cv::Rect& b)
-{
-	return (float)(a & b).area() / (float)((a.area() + b.area() - (a & b).area()));
+
+
+float iou(const Rect& a, const Rect& b) {
+    float INTERSECTION = (a & b).area();
+    float UNION = a.area() + b.area();
+    return INTERSECTION / (UNION - INTERSECTION);
 }
 
-void nms(const std::vector<cv::Rect>& boxes, const std::vector<float>& probabilities,
-	float threshold, std::vector<unsigned>& indices)
-{
-	std::vector<int> mark(boxes.size() + 1, 0);
-	std::vector<int>::iterator it;
-	int ind;
-	float IOU;
-	float maxProb;
+bool comp(const pair<int, float>& a, const pair<int, float>& b) {
+    return a.second > b.second;
+}
 
-	mark[boxes.size()] = -1;
+void nms(const vector<Rect>& boxes, const vector<float>& probabilities,
+    float threshold, vector<unsigned>& indices) {
 
-	it = std::find(mark.begin(), mark.end(), 0);
-
-	while (it != mark.end())
-	{
-		maxProb = 0.0f;
-
-		for (size_t i = 0; i < probabilities.size(); i++)
-		{
-			if (mark[i] == 0)
-			{
-				if (probabilities[i] > maxProb)
-				{
-					maxProb = probabilities[i];
-					ind = i;
-				}
-			}
-		}
-
-		indices.push_back(ind);
-		mark[ind] = 1;
-
-		for (size_t i = 0; i < probabilities.size(); i++)
-		{
-			if (mark[i] == 0)
-			{
-				IOU = iou(boxes[ind], boxes[i]);
-
-				if (IOU >= threshold)
-				{
-					mark[i] = 1;
-				}
-			}
-		}
-
-		it = std::find(mark.begin(), mark.end(), 0);
-	}
+    vector <pair<int, float> > tmp;
+    for (int i = 0; i < boxes.size(); i++) {
+        tmp.push_back(make_pair(i, probabilities[i]));
+    }
+    for (int i = 0; i < boxes.size(); i++) {
+        for (int j = i + 1; j < boxes.size(); j++) {
+            if (iou(boxes[i], boxes[j]) > threshold) {
+                if (tmp[i].second > tmp[j].second) {
+                    tmp[j].first = -1;
+                }
+                else {
+                    tmp[i].first = -1;
+                    break;
+                }
+            }
+        }
+        sort(tmp.begin(), tmp.end(), comp);
+    }
+    for (int i = 0; i < boxes.size(); i++) {
+        if (tmp[i].first != -1) {
+            indices.push_back(tmp[i].first);
+        }
+    }
 }
