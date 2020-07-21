@@ -25,7 +25,7 @@ Detector::Detector() {
     
     DataPtr output_info = network.getOutputsInfo().begin()->second;
     output_info->setPrecision(Precision::FP32);
-    input_name = network.getOutputsInfo().begin()->first;
+    input_name = network.getInputsInfo().begin()->first;
     ExecutableNetwork exec_net = ie.LoadNetwork(network, "CPU");
 
     req = exec_net.CreateInferRequest();
@@ -39,12 +39,12 @@ void Detector::detect(const cv::Mat& image,
     std::vector<float>& probabilities,
     std::vector<unsigned>& classes) {
 
-    SizeVector dims =  { 1, (size_t)image.channels(), (size_t)image.rows, (size_t)image.cols };
+    SizeVector dims =  { 1,  (size_t)image.rows, (size_t)image.cols, (size_t)image.channels() };
     Blob::Ptr input = make_shared_blob<float>(TensorDesc(Precision::FP32, dims, Layout::NHWC), (float*)image.data); std::cout << "Create input\n";
     req.SetBlob(input_name, input); std::cout << "42\n";//Error 
     req.Infer(); std::cout << "43\n";
     float* output = req.GetBlob(output_name)->buffer(); std::cout << "44\n";
-    int size = req.GetBlob(output_name)->size() / 7; std::cout << "44\n";
+    int size = req.GetBlob(output_name)->size() / 7; 
     
     for (int i = 0; i < size; i++) {
         int indx = i * 7;
