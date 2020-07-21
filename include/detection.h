@@ -4,10 +4,29 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <inference_engine.hpp>
+#include <algorithm>
 
 using namespace cv;
 using namespace std;
+using namespace InferenceEngine;
 using namespace cv::utils::fs;
+
+class Detector {
+public:
+	Detector();
+
+	void detect(const cv::Mat& image,
+		float nmsThreshold,
+		float probThreshold,
+		std::vector<cv::Rect>& boxes,
+		std::vector<float>& probabilities,
+		std::vector<unsigned>& classes);
+
+private:
+	InferenceEngine::InferRequest req;
+	std::string outputName;
+};
 
 float iou(const cv::Rect& a, const cv::Rect& b);
 

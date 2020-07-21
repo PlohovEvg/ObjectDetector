@@ -1,4 +1,4 @@
-#include "nms_and_iou.h"
+#include "detection.h"
 
 
 int xTL, yTL, xBR, yBR;
@@ -37,8 +37,10 @@ void onMouse(int event, int x, int y, int flags, void *userdata)
 int main()
 { 
 	int n; //Set n value
-	int max_score; //Set max_score value
+	int max_score = 10; //Set max_score value
 	float IOUthresh = 0.9f;
+	float probThresh = 0.3f;
+	float NMSThresh = 0.45f;
 	int ran, boxran;
 	unsigned chosen_class;
 	int score = 0;
@@ -49,6 +51,7 @@ int main()
 	std::vector<unsigned> classes;
 	Mat chosen_pic;
 	Mat copy;
+	Detector model;
 
 	for (int i = 0; i < n; i++)
 	{
@@ -77,7 +80,7 @@ int main()
 		chosen_pic = images[ran];
 		images.erase(images.begin() + (ran - 1));
 
-		//Detect objects on chosen_pic
+		model.detect(chosen_pic, NMSThresh, probThresh, boxes, probs, classes);
 		
 		boxran = rand() % boxes.size();
 		chosen_class = classes[boxran];
