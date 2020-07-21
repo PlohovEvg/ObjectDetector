@@ -52,7 +52,7 @@ int main()
 
 	for (int i = 0; i < n; i++)
 	{
-		images[i] = imread(join(DATA_FOLDER, "*.jpg"));
+		images[i] = imread(join(DATA_FOLDER, to_string(i + 1) + ".jpg"));
 	}
 
 	srand(time(NULL));
@@ -73,6 +73,7 @@ int main()
 		probs.clear();
 
 		ran = rand() % (n + 1 - counter);
+		counter++;
 		chosen_pic = images[ran];
 		images.erase(images.begin() + (ran - 1));
 
