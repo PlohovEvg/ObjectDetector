@@ -10,22 +10,25 @@ using namespace InferenceEngine;
 
 
 Detector::Detector() {
-    std::cout << "13\n";
-    Core ie; std::cout << "14\n";
-    // Load deep learning network into memory
-    auto net = ie.ReadNetwork(utils::fs::join(DATA_FOLDER, "product-detection-0001.xml"),
-        utils::fs::join(DATA_FOLDER, "product-detection-0001.bin"));
-    std::cout << "18\n";
-    InputInfo::Ptr input_info = net.getInputsInfo().begin()->second; std::cout << "19\n";
-    input_info->getPreProcess().setColorFormat(ColorFormat::BGR); std::cout << "20\n";
-    input_info->getPreProcess().setResizeAlgorithm(ResizeAlgorithm::RESIZE_BILINEAR); std::cout << "21\n";
-    input_info->setLayout(Layout::NHWC);
-    input_info->setPrecision(Precision::U8); std::cout << "23\n";
-    
-    outputName = net.getOutputsInfo().begin()->first;
-    ExecutableNetwork exec_net = ie.LoadNetwork(net, "CPU");
-    req = exec_net.CreateInferRequest();
 
+    Core ie;
+    //Load deep learning network into memory
+    CNNNetwork network = ie.ReadNetwork(utils::fs::join(DATA_FOLDER, "product-detection-0001.xml"),
+        utils::fs::join(DATA_FOLDER, "product-detection-0001.bin"));
+    
+    output_name = network.getOutputsInfo().begin()->first;
+    InputInfo::Ptr input_info = network.getInputsInfo().begin()->second;
+    input_info->getPreProcess().setColorFormat(ColorFormat::BGR);
+    input_info->getPreProcess().setResizeAlgorithm(ResizeAlgorithm::RESIZE_BILINEAR);
+    input_info->setLayout(Layout::NHWC);
+    input_info->setPrecision(Precision::FP32);
+    
+    DataPtr output_info = network.getOutputsInfo().begin()->second;
+    output_info->setPrecision(Precision::FP32);
+    input_name = network.getOutputsInfo().begin()->first;
+    ExecutableNetwork exec_net = ie.LoadNetwork(network, "CPU");
+
+    req = exec_net.CreateInferRequest();
 }
 
 
@@ -36,14 +39,13 @@ void Detector::detect(const cv::Mat& image,
     std::vector<float>& probabilities,
     std::vector<unsigned>& classes) {
 
-    std::cout << "Start detection\n";
-    std::vector<size_t> dims = { 1, (size_t)image.channels(), (size_t)image.rows, (size_t)image.cols };
-    Blob::Ptr input = make_shared_blob<uchar>(TensorDesc(Precision::U8, dims, Layout::NHWC), image.data); std::cout << "Create input\n";
-    req.SetBlob("image", input); std::cout << "42\n";//Error 
+    SizeVector dims =  { 1, (size_t)image.channels(), (size_t)image.rows, (size_t)image.cols };
+    Blob::Ptr input = make_shared_blob<float>(TensorDesc(Precision::FP32, dims, Layout::NHWC), (float*)image.data); std::cout << "Create input\n";
+    req.SetBlob(input_name, input); std::cout << "42\n";//Error 
     req.Infer(); std::cout << "43\n";
-    float* output = req.GetBlob(outputName)->buffer(); std::cout << "44\n";
-    int size = req.GetBlob(outputName)->size() / 7;
-
+    float* output = req.GetBlob(output_name)->buffer(); std::cout << "44\n";
+    int size = req.GetBlob(output_name)->size() / 7; std::cout << "44\n";
+    
     for (int i = 0; i < size; i++) {
         int indx = i * 7;
         float Probability = output[indx + 2];
@@ -101,7 +103,6 @@ void Detector::detect(const cv::Mat& image,
 
 void nms(const std::vector<cv::Rect>& boxes, const std::vector<float>& probabilities,
     float threshold, std::vector<unsigned>& indices) {
-    //CV_Error(Error::StsNotImplemented, "nms");
 
     std::vector<int> ind, nonind;
     for (int i = 0; i < boxes.size(); i++)
@@ -146,11 +147,8 @@ void nms(const std::vector<cv::Rect>& boxes, const std::vector<float>& probabili
 }
 
 float iou(const cv::Rect& a, const cv::Rect& b) {
-    //CV_Error(Error::StsNotImplemented, "iou");
     float s;
-
     s = (a & b).area();
-
     float SU = a.area() + b.area() - s;
     return s / SU;
 }

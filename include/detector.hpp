@@ -2,7 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <inference_engine.hpp>
 
-class Detector{
+class Detector {
 public:
     Detector();
 
@@ -15,7 +15,7 @@ public:
 
 private:
     InferenceEngine::InferRequest req;
-    std::string outputName;
+    std::string input_name , output_name;
 };
 
 float iou(const cv::Rect& a, const cv::Rect& b);
