@@ -32,15 +32,18 @@ void Detector::detect(const cv::Mat& image,
 	std::vector<float>& probabilities,
 	std::vector<unsigned>& classes) {
 	Blob::Ptr input = wrapMatToBlob(image);
-
 	req.SetBlob("image", input);
-
 	req.Infer();
-
 	float *output = req.GetBlob(outputName)->buffer();
-
 	size_t out_size = req.GetBlob(outputName)->size();
 	size_t reckt_num = out_size / 7;
+
+	cout << out_size << endl << endl;
+
+	for (size_t i = 0; i < out_size; i+=7)
+	{
+		cout << output[i] << ", " << output[i + 1] << ", " << output[i + 2] << ", " << output[i + 3] << ", " << output[i + 4] << ", " << output[i + 5] << ", " << output[i + 6] << endl;
+	}
 
 	std::vector<cv::Rect> tempBoxes;
 	std::vector<float> tempProbs;
@@ -54,27 +57,34 @@ void Detector::detect(const cv::Mat& image,
 		if (output[7 * i + 2] >= probThreshold)
 		{
 			int x = (int)(output[7 * i + 3] * WIDTH);
+			cout << "63" << endl;
 			int y = (int)(output[7 * i + 4] * HEIGHT);
+			cout << "64" << endl;
 			int width = (int)(output[7 * i + 5] * WIDTH) - (int)(output[7 * i + 3] * WIDTH) + 1;
+			cout << "65" << endl;
 			int height = (int)(output[7 * i + 6] * HEIGHT) - (int)(output[7 * i + 4] * HEIGHT) + 1;
+			cout << "66" << endl;
 
 			tempClasses.push_back((unsigned)output[7 * i + 1]);
+			cout << "67" << endl;
 			tempProbs.push_back(output[7 * i + 2]);
+			cout << "68" << endl;
 			tempBoxes.push_back(Rect(x, y, width, height));
+			cout << "69" << endl;
 		}
 	}
 	std::vector<unsigned> inds;
 	nms(tempBoxes, tempProbs, nmsThreshold, inds);
-
-	std::cout << std::endl;
-	std::cout << std::endl;
-	std::cout << std::endl;
+	cout << "70" << endl;
 
 	for (size_t i = 0; i < inds.size(); i++)
 	{
 		boxes.push_back(tempBoxes[inds[i]]);
+		cout << "71" << endl;
 		probabilities.push_back(tempProbs[inds[i]]);
+		cout << "72" << endl;
 		classes.push_back(tempClasses[inds[i]]);
+		cout << "73" << endl;
 	}
 }
 

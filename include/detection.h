@@ -6,6 +6,8 @@
 #include <iostream>
 #include <inference_engine.hpp>
 #include <algorithm>
+#include <fstream>
+#include <string>
 
 using namespace cv;
 using namespace std;
