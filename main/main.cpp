@@ -10,9 +10,9 @@
 using namespace cv;
 using namespace std;
 
-float Iou;
+float maxIOU;
 Rect r;
-Rect chosen_box;
+vector<Rect> chosen_boxes;
 
 
 struct Region {
@@ -48,45 +48,80 @@ static void onMouse(int event, int x, int y, int flags, void* img) {
     }
     if (event == EVENT_LBUTTONUP) {
         //cout << "move" << endl;
+		float Iou;
         chosen.X2 = x;
-        chosen.Y2 = y;
-        r = Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1);
-        Iou = iou(r, chosen_box);
+        chosen.Y2 = y;		
+        r = Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y1 - chosen.Y2);
+		for (size_t i = 0; i < chosen_boxes.size(); i++)
+		{
+			Iou = iou(chosen_boxes[i], r);
+			if (Iou > maxIOU)
+			{
+				maxIOU = Iou;
+			}
+		}
         chosen.click = 0;
         return;
     }
 }
 
 int main() {
-    const int n = 20; //Set n value
-    const int max_score = 20; //Set max_score value
+    const int n = 20; 
+    const int max_score = 20; 
     float IOUthresh = 0.7f;
-    int ran, boxran;
-    unsigned chosen_class;
+	int ranpic, ranbox;
     int score = 0;
     int counter = 0;
-    std::vector<Mat> images;
-    std::vector<float> probs;
+    vector<float> probs;
+	vector<Rect> boxes;
+	vector<unsigned> classes;
+	vector<unsigned> pic_indexes; //from 1 to 20
     Mat chosen_pic;
     Mat copy;
     std::vector<std::string> className;
+	string chosen_class_name;
+	Detector det;
 
+	
+	for (int i = 0; i < n; i++)
+	{
+		pic_indexes.push_back(i + 1);
+	}
+
+
+	srand(time(NULL));
 
     for (int i = 0; i < n; i++) {
-        images.push_back(imread(join(DATA_FOLDER, to_string(i + 1) + ".jpg")));
-    }
+		probs.clear();  //clear vectors with each iteration
+		boxes.clear();
+		classes.clear();
+		className.clear();
+		chosen_boxes.clear();
 
-    for (int i = 0; i < 1; i++) {
-        Detector det;
-        cv::Mat img = images[i];
-        std::vector<cv::Rect> boxes;
-        std::vector<float> proboblilities;
-        std::vector<unsigned> classes;
-        std::cout << "Start Detector\n";
-        det.detect(img, 0.8f, 0.7f, boxes, proboblilities, classes, className);
+		//Select random picture from folder /data/
+		ranpic = rand() % pic_indexes.size(); //randomize index of vector "pic_indexes" to select image
 
-        std::string text = "Find " + className[0];
-        chosen_box = boxes[0];
+		chosen_pic = imread(join(DATA_FOLDER, to_string(pic_indexes[ranpic]) + ".jpg")); 
+
+		pic_indexes.erase(pic_indexes.begin() + ranpic); //remove used index of picture
+
+        det.detect(chosen_pic, 0.45f, 0.3f, boxes, probs, classes, className);
+
+		ranbox = rand() % boxes.size(); //randomize index to select random object
+		chosen_boxes.push_back(boxes[ranbox]); //push chosen_box
+		chosen_class_name = className[ranbox];
+
+		//search for objects with the same class_name
+		for (int i = 0; i < boxes.size(); i++)
+		{
+			if ((i != ranbox) && (className[i] == chosen_class_name))
+			{
+				chosen_boxes.push_back(boxes[i]);  
+			}
+		}
+
+        std::string text = "Find " + chosen_class_name;  //we should use putText here
+        
 
 
         if (score == max_score) {
@@ -99,23 +134,7 @@ int main() {
             waitKey();
             break;
         }
-        Iou = -1.0f;
-        boxes.clear();
-        classes.clear();
-        probs.clear();
-
-        //ran = rand() % (n + 1 - counter);
-        //counter++;
-        //chosen_pic = images[ran];
-        //images.erase(images.begin() + (ran - 1));
-
-        ////Detect objects on chosen_pic
-
-        //boxran = rand() % boxes.size();
-        //chosen_class = classes[boxran];
-        //chosen_box = boxes[boxran];
-
-        chosen_pic = images[i];
+        maxIOU = -1.0f;                
         namedWindow(text, WINDOW_AUTOSIZE);
         setMouseCallback(text, onMouse);
 
@@ -124,15 +143,15 @@ int main() {
             rectangle(copy, r, Scalar(0, 0, 255));
             imshow(text, copy);
             char key = waitKey(30);
-            if (key == 27)break;
+            /*if (key == 27)break;*/
 
-            if (Iou != -1.0f) {
+            if (maxIOU != -1.0f) {
                 break;
             }
         }
         destroyWindow(text);
 
-        if (Iou >= IOUthresh) {
+        if (maxIOU >= IOUthresh) {
             destroyWindow(text);
 
             score++;
