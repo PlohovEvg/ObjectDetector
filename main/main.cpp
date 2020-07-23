@@ -60,8 +60,6 @@ static void onMouse(int event, int x, int y, int flags, void* img) {
 }
 
 int main() {
-    chosen.click = 0;
-
     const int n = 20; //Set n value
     const int max_score = 20; //Set max_score value
     float IOUthresh = 0.7f;
@@ -81,6 +79,8 @@ int main() {
     }
 
     for (int i = 0; i < n; i++) {
+        chosen.click = 0;
+        r = Rect(0, 0, 0, 0);
         Detector det;
         cv::Mat img = images[i];
         std::vector<cv::Rect> boxes;
