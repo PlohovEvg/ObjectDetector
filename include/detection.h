@@ -18,16 +18,14 @@ class Detector {
 public:
 	Detector();
 
-	void detect(const cv::Mat& image,
-		float nmsThreshold,
-		float probThreshold,
-		std::vector<cv::Rect>& boxes,
-		std::vector<float>& probabilities,
-		std::vector<unsigned>& classes);
-
-private:
-	InferenceEngine::InferRequest req;
-	std::string outputName;
+    void detect(const cv::Mat& image,
+        float nmsThreshold,
+        float probThreshold,
+        std::vector<cv::Rect>& boxes,
+        std::vector<float>& probabilities,
+        std::vector<unsigned>& classes,std::vector<std::string> &className);
+    Blob::Ptr wrapMat2Blob(const Mat& m);
+        
 };
 
 float iou(const cv::Rect& a, const cv::Rect& b);

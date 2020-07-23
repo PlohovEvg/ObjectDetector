@@ -1,154 +1,160 @@
-#include "detection.h"
+#include <opencv2/dnn.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/videoio/videoio.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/core.hpp>
+#include <iostream>
+#include <detection.h>
+using namespace cv;
+using namespace std;
 
-
-int xTL, yTL, xBR, yBR;
-bool flag = false;
 float Iou;
 Rect r;
 Rect chosen_box;
 
-void onMouse(int event, int x, int y, int flags, void *userdata)
-{
-	switch (event)
-	{
-	case EVENT_LBUTTONDOWN:
-		xTL = x;
-		yTL = y;
-		flag = true;
-		break;
-	case EVENT_MOUSEMOVE:
-		if (flag)
-		{
-			xBR = x;
-			yBR = y;
-			r = Rect(xTL, yTL, xBR - xTL, yBR - yTL);
-		}
-		break;
-	case EVENT_LBUTTONUP:
-		xBR = x;
-		yBR = y;
-		r = Rect(xTL, yTL, xBR - xTL, yTL - yBR);
-		Iou = iou(r, chosen_box);
-		flag = false;
-		break;
-	}
+
+struct Region {
+    int click;// on off
+    int X1; //initial coordination based on EVENT_LBUTTONDOWN
+    int Y1;
+    int X2; // actual coordination 
+    int Y2;
+    int move;
+}chosen;
+
+static void onMouse(int event, int x, int y, int flags, void* img) {
+    if (event == EVENT_RBUTTONDOWN) {
+        chosen.click = 0;
+        //cout << "right down " << endl;
+        return;
+    }
+    if (event == EVENT_LBUTTONDOWN) {
+        chosen.X1 = x;
+        chosen.Y1 = y;
+        chosen.click = 1;
+        //cout << "left down" << endl;
+        return;
+    }
+    if (event == EVENT_MOUSEMOVE) {
+        if (chosen.click == 1) {
+            chosen.X2 = x;
+            chosen.Y2 = y;
+            r = Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1);
+            //cout << "left up" << endl;
+        }
+        return;
+    }
+    if (event == EVENT_LBUTTONUP) {
+        //cout << "move" << endl;
+        chosen.X2 = x;
+        chosen.Y2 = y;
+        r = Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1);
+        Iou = iou(r, chosen_box);
+        chosen.click = 0;
+        return;
+    }
 }
 
-int main()
-{ 
-	int n = 5; //Set n value
-	int max_score = 2; //Set max_score value
-	float IOUthresh = 0.9f;
-	float probThresh = 0.3f;
-	float NMSThresh = 0.45f;
-	int ran, boxran;
-	unsigned chosen_class;
-	std::string chosen_class_name;
-	int score = 0;
-	int counter = 0;
-	std::vector<Mat> images;
-	std::vector<Rect> boxes;
-	std::vector<float> probs;
-	std::vector<unsigned> classes;
-	std::vector<std::string> classesNames;
-	std::string line;
-	std::ifstream ifst(join(DATA_FOLDER, "classes.txt"));
-	Mat chosen_pic;
-	Mat copy;
-	Detector model;
+int main() {
+    const int n = 20; //Set n value
+    const int max_score = 20; //Set max_score value
+    float IOUthresh = 0.7f;
+    int ran, boxran;
+    unsigned chosen_class;
+    int score = 0;
+    int counter = 0;
+    std::vector<Mat> images;
+    std::vector<float> probs;
+    Mat chosen_pic;
+    Mat copy;
+    std::vector<std::string> className;
 
-	//Mat img = imread("C:\\openvino_practice\\data\\conference.png");
-	Mat img = imread(join(DATA_FOLDER, "1.jpg"));
-	imshow("before", img);
-	waitKey();
 
-	model.detect(img, NMSThresh, probThresh, boxes, probs, classes);
+    for (int i = 0; i < n; i++) {
+        images.push_back(imread(join(DATA_FOLDER, to_string(i + 1) + ".jpg")));
+    }
 
-	for (size_t i = 0; i < boxes.size(); i++)
-	{
-		rectangle(img, boxes[i], Scalar(0, 255, 0));
-	}
-	imshow("after", img);
-	waitKey();
+    for (int i = 0; i < 1; i++) {
+        Detector det;
+        cv::Mat img = images[i];
+        std::vector<cv::Rect> boxes;
+        std::vector<float> proboblilities;
+        std::vector<unsigned> classes;
+        std::cout << "Start Detector\n";
+        det.detect(img, 0.8f, 0.7f, boxes, proboblilities, classes, className);
 
-	//while (std::getline(ifst, line))
-	//{
-	//	classesNames.push_back(line);
-	//}
+        std::string text = "Find " + className[0];
+        chosen_box = boxes[0];
 
-	//for (int i = 0; i < n; i++)
-	//{
-	//	images.push_back(imread(join(DATA_FOLDER, to_string(i + 1) + ".jpg")));
-	//}
-	//
-	//srand(time(NULL));
-	//
-	//for (int i = 0; i < n; i++)
-	//{
-	//	if (score == max_score)
-	//	{
-	//		Mat A = Mat::zeros(200, 50, CV_8U);
-	//		namedWindow("You win!", WINDOW_NORMAL);
-	//		putText(A, "YOU WIN!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
-	//		return 1;
-	//	}
-	//	
-	//	Iou = -1.0f;
-	//	boxes.clear();
-	//	classes.clear();
-	//	probs.clear();
-	//	
-	//	ran = rand() % (n + 1 - counter);
-	//	counter++;	
-	//	chosen_pic = images[ran];
-	//	images.erase(images.begin() + (ran - 1));
-	//	
 
-	//	model.detect(chosen_pic, NMSThresh, probThresh, boxes, probs, classes);
-	//	cout << "11" << endl;
-	//	boxran = rand() % (int)(boxes.size());
-	//	cout << "12" << endl;
-	//	chosen_class = classes[boxran];
-	//	cout << "13" << endl;
-	//	chosen_class_name = classesNames[chosen_class];
-	//	cout << "14" << endl;
-	//	chosen_box = boxes[boxran];
-	//	cout << "15" << endl;
+        if (score == max_score) {
+            destroyWindow(text);
+            Mat A = imread(join(DATA_FOLDER, "0.jpg"));
+            putText(A, "YOU WIN!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
+            std::string result = "Score:" + std::to_string(score);
+            putText(A, result, Point(180, 300), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 255), 4,3);
+            imshow("WIN", A);
+            waitKey();
+            break;
+        }
+        Iou = -1.0f;
+        boxes.clear();
+        classes.clear();
+        probs.clear();
 
-	//	namedWindow("img", WINDOW_NORMAL);
-	//	cout << "16" << endl;
-	//	setMouseCallback("img", onMouse);
-	//	cout << "17" << endl;
+        //ran = rand() % (n + 1 - counter);
+        //counter++;
+        //chosen_pic = images[ran];
+        //images.erase(images.begin() + (ran - 1));
 
-	//	//Ask user to highlight chosen object
+        ////Detect objects on chosen_pic
 
-	//	cout << "Please, highlight " << chosen_class_name << endl;
+        //boxran = rand() % boxes.size();
+        //chosen_class = classes[boxran];
+        //chosen_box = boxes[boxran];
 
-	//	while (true)
-	//	{
-	//		chosen_pic.copyTo(copy);
-	//		rectangle(copy, r, Scalar(0, 0, 255));
-	//		imshow("img", copy);
-	//		char key = waitKey(30);
+        chosen_pic = images[i];
+        namedWindow(text, WINDOW_AUTOSIZE);
+        setMouseCallback(text, onMouse);
 
-	//		if (Iou != -1.0f)
-	//		{
-	//			break;
-	//		}						
-	//	}
+        while (1) {
+            chosen_pic.copyTo(copy);
+            rectangle(copy, r, Scalar(0, 0, 255));
+            imshow(text, copy);
+            char key = waitKey(30);
+            if (key == 27)break;
 
-	//	if (Iou >= IOUthresh)
-	//	{
-	//		score++;
-	//		cout << "current score:" << score << "  target score:" << max_score << endl;
-	//	}
-	//	else
-	//	{
-	//		Mat A = Mat::zeros(200, 50, CV_8U);
-	//		namedWindow("Game over!", WINDOW_NORMAL);
-	//		putText(A, "GAME OVER!", Point(10, 5), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0));
-	//		break;
-	//	}
-	//}
-	return 0;
+            if (Iou != -1.0f) {
+                break;
+            }
+        }
+        destroyWindow(text);
+
+        if (Iou >= IOUthresh) {
+            destroyWindow(text);
+
+            score++;
+            cout << "current score:" << score << "  target score:" << max_score << endl;
+            Mat A = imread(join(DATA_FOLDER, "0.jpg"));
+            putText(A, "RIGHT!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
+            std::string result = "Score:" + std::to_string(score);
+            putText(A, result, Point(180, 300), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 255), 4,3);
+            imshow("WIN", A);
+            waitKey();
+        }
+        else {
+            destroyWindow(text);
+
+            Mat A = imread(join(DATA_FOLDER, "0.jpg"));
+            putText(A, "GAME OVER!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
+            std::string result = "Score:" + std::to_string(score);
+            putText(A, result, Point(180, 300), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 255), 4,3);
+            imshow("GAME OVER :(", A);
+            waitKey();
+            break;
+        }
+    }
+    return 0;
 }
