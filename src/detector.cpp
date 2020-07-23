@@ -69,13 +69,14 @@ void Detector::detect(const cv::Mat& image,
     nms(boxes, probabilities, nmsThreshold, indices); 
     int Size = boxes.size();
     int k = 0, j = 0;
-    
+
+    /*
     for (size_t i = 0; i < indices.size(); i++)
     {
         boxes.push_back(boxes[indices[i]]);
         probabilities.push_back(probabilities[indices[i]]);
         classes.push_back(classes[indices[i]]);
-    }
+    }*/
     std::vector<std::string> className;
     std::ifstream ifs(utils::fs::join(DATA_FOLDER, "classes.txt"));
     std::string line;
@@ -86,8 +87,11 @@ void Detector::detect(const cv::Mat& image,
     Size = boxes.size();
     for (int i = 0; i < Size; i++) {
         cv::rectangle(img_copy, boxes[i], cv::Scalar(255, 0, 0), 2);
-        cv::putText(img_copy, cv::String(/*std::to_string(probabilities[i])+*/className[i]), cv::Point(boxes[i].x, boxes[i].y), 2, 1, cv::Scalar(0, 0, 255)/*, 0.5, 8, false*/);
+        cv::putText(img_copy, cv::String(std::to_string(probabilities[i])+className[i]), cv::Point(boxes[i].x, boxes[i].y), 3, 1, cv::Scalar(0, 0, 255)/*, 0.5, 8, false*/);
+        std::cout << "ClassName = "<<className[i]<<"\tProb = "<<probabilities[i] <<"\tBoxesCoord = ["<<boxes[i].x<<","<<boxes[i].y<<"]\t height = "<<boxes[i].height<<"\tweight = "<<boxes[i].width<<"\n";
+
     }
+    
     imshow("image_result", img_copy);
     waitKey();
 }
@@ -96,50 +100,53 @@ void Detector::detect(const cv::Mat& image,
 
 
 
-
 void nms(const std::vector<cv::Rect>& boxes, const std::vector<float>& probabilities,
-    float threshold, std::vector<unsigned>& indices) {
-    
-    std::vector<int> ind, nonind;
+    float threshold, std::vector<unsigned>& indices)
+{
+    std::vector<int> mark(boxes.size() + 1, 0);
+    std::vector<int>::iterator it;
+    int ind;
+    float IOU;
+    float maxProb;
 
-    for (int i = 0; i < boxes.size(); i++)
+    mark[boxes.size()] = -1;
+
+    it = std::find(mark.begin(), mark.end(), 0);
+
+    while (it != mark.end())
     {
-        ind.push_back(i);
-    }
-    
-    for (int i = 0; i < boxes.size() - 1; i++)
-    {
-        for (int j = i + 1; j < boxes.size(); j++)
+        maxProb = 0.0f;
+
+        for (size_t i = 0; i < probabilities.size(); i++)
         {
-
-            if (iou(boxes[i], boxes[j]) > threshold) {
-                if (probabilities[i] > probabilities[j]) {
-                    ind[j] = -1;
-
-                }
-                else {
-                    ind[i] = -1;
-                    break;
+            if (mark[i] == 0)
+            {
+                if (probabilities[i] > maxProb)
+                {
+                    maxProb = probabilities[i];
+                    ind = i;
                 }
             }
         }
-    }
-        
-    indices.clear();
-    for (int i = 0; i < ind.size(); i++)
-    {
-        if (ind[i] >= 0) indices.push_back(ind[i]);
-    }
-    
-    for (int i = 0; i < indices.size() - 1; i++)
-    {
-        for (int j = 0; j < indices.size() - i - 1; j++)
+
+        indices.push_back(ind);
+        mark[ind] = 1;
+
+        for (size_t i = 0; i < probabilities.size(); i++)
         {
+            if (mark[i] == 0)
+            {
+                IOU = iou(boxes[ind], boxes[i]);
 
-            if (probabilities[indices[j]] < probabilities[indices[j + 1]])swap(indices[j], indices[j + 1]);
+                if (IOU >= threshold)
+                {
+                    mark[i] = 1;
+                }
+            }
         }
-    }
 
+        it = std::find(mark.begin(), mark.end(), 0);
+    }
 }
 
 float iou(const cv::Rect& a, const cv::Rect& b) {
