@@ -10,9 +10,9 @@
 using namespace cv;
 using namespace std;
 
-vector<float> Iou;
+float maxIOU;
 Rect r;
-vector<Rect> chosen_box;
+vector<Rect> chosen_boxes;
 
 
 struct Region {
@@ -51,8 +51,8 @@ static void onMouse(int event, int x, int y, int flags, void* img) {
         chosen.X2 = x;
         chosen.Y2 = y;
         r = Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1);
-        for (int i = 0; i < chosen_box.size(); i++) {
-            Iou.push_back(iou(r, chosen_box[i]));
+        for (int i = 0; i < chosen_boxes.size(); i++) {
+            maxIOU = max(maxIOU, iou(r, chosen_boxes[i]));
         }
         chosen.click = 0;
         return;
@@ -67,36 +67,47 @@ int main() {
     unsigned chosen_class;
     int score = 0;
     int counter = 0;
-    std::vector<Mat> images;
     std::vector<float> probs;
+    vector<unsigned> pic_indexes; //from 1 to 20
     Mat chosen_pic;
     Mat copy;
     std::vector<std::string> className;
-
-
+    int ranpic, ranbox;
+    string chosen_class_name;
     for (int i = 0; i < n; i++) {
-        images.push_back(imread(join(DATA_FOLDER, to_string(i + 1) + ".jpg")));
+        pic_indexes.push_back(i + 1);
     }
+    srand(time(NULL));
 
     for (int i = 0; i < n; i++) {
         chosen.click = 0;
         r = Rect(0, 0, 0, 0);
         Detector det;
-        cv::Mat img = images[i];
+        // Select random picture from folder / data /
+
+        ranpic = rand() % pic_indexes.size(); //randomize index of vector "pic_indexes" to select image
+        chosen_pic = imread(join(DATA_FOLDER, to_string(pic_indexes[ranpic]) + ".jpg"));
+        
+        pic_indexes.erase(pic_indexes.begin() + ranpic); //remove used index of picture
+
+        cv::Mat img = chosen_pic;
         std::vector<cv::Rect> boxes;
         std::vector<float> proboblilities;
         std::vector<unsigned> classes;
         std::cout << "Start Detector\n";
         det.detect(img, 0.8f, 0.7f, boxes, proboblilities, classes, className);
 
-        string chose_name = className[classes[0]];
-        std::string text = "Find " + chose_name;
-        for (int i = 0; i < boxes.size(); i++) {
-            if (className[i] == chose_name) {
-                chosen_box.push_back(boxes[i]);
+        
+        ranbox = rand() % boxes.size(); //randomize index to select random object
+        chosen_class_name = className[classes[ranbox]];
+
+        //search for objects with the same class_name
+        for (int i = 0; i < boxes.size(); i++)    {
+            if (className[classes[i]] == chosen_class_name)   {
+                chosen_boxes.push_back(boxes[i]);
             }
         }
-
+        string text = "Find " + chosen_class_name;//we should use putText here
         if (score == max_score) {
             destroyWindow(text);
             Mat A = imread(join(DATA_FOLDER, "0.jpg"));
@@ -107,24 +118,12 @@ int main() {
             waitKey();
             break;
         }
-        Iou.clear();
+        maxIOU = -1.0f;
         boxes.clear();
         classes.clear();
         probs.clear();
         className.clear();
 
-        //ran = rand() % (n + 1 - counter);
-        //counter++;
-        //chosen_pic = images[ran];
-        //images.erase(images.begin() + (ran - 1));
-
-        ////Detect objects on chosen_pic
-
-        //boxran = rand() % boxes.size();
-        //chosen_class = classes[boxran];
-        //chosen_box = boxes[boxran];
-
-        chosen_pic = images[i];
         namedWindow(text, WINDOW_AUTOSIZE);
         setMouseCallback(text, onMouse);
 
@@ -135,16 +134,13 @@ int main() {
             char key = waitKey(30);
             if (key == 27)break;
 
-            if (Iou.size() != 0) {
+            if (maxIOU != -1.0f) {
                 break;
             }
         }
         destroyWindow(text);
-        int k = 0;
-        for (int i = 0; i < Iou.size(); i++) {
-            if (Iou[i] >= IOUthresh)k++;
-        }
-        if (k!=0) {
+  
+        if (maxIOU >= IOUthresh) {
             destroyWindow(text);
             score++;
             cout << "current score:" << score << "  target score:" << max_score << endl;
