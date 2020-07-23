@@ -1,80 +1,80 @@
 person
-chair
-banana
-handbag
-skis
-skateboard
 bicycle
-couch
-microwave
-umbrella
-teddy bear
-hot dog
-snowboard
 car
-potted plant
-sink
-toilet
-apple
-scissors
-tie
 motorcycle
-tv
-oven
-book
-keyboard
-truck
-fire hydrant
-stop sign
-sports ball
-bird
-cow
-toaster
-boat
-backpack
-traffic light
-bowl
-refrigerator
-surfboard
-broccoli
-donut
-cat
 airplane
 bus
-pizza
-sandwich
-suitcase
-vase
-dog
 train
-cell phone
+truck
+boat
+traffic light
+fire hydrant
+stop sign
+parking meter
+bench
+bird
+cat
+dog
+horse
+sheep
+cow
+elephant
+bear
+zebra
+giraffe
+backpack
+umbrella
+handbag
+tie
+suitcase
+frisbee
+skis
+snowboard
+sports ball
+kite
+baseball bat
+baseball glove
+skateboard
+surfboard
+tennis racket
+bottle
 wine glass
 cup
 fork
-carrot
-baseball bat
-tennis racket
-horse
-mouse
 knife
-kite
-baseball glove
+spoon
+bowl
+banana
+apple
+sandwich
+orange
+broccoli
+carrot
+hot dog
+pizza
+donut
 cake
-sheep
+chair
+couch
+potted plant
 bed
 dining table
-remote
-zebra
-hair drier
-spoon
-frisbee
-orange
-packing meter
-giraffe
-bottle
+toilet
+tv
 laptop
-elephant
+mouse
+remote
+keyboard
+cell phone
+microwave
+oven
+toaster
+sink
+refrigerator
+book
 clock
-bear
+vase
+scissors
+teddy bear
+hair drier
 toothbrush
-bench
