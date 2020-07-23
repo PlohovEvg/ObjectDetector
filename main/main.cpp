@@ -10,9 +10,9 @@
 using namespace cv;
 using namespace std;
 
-float Iou;
+vector<float> Iou;
 Rect r;
-Rect chosen_box;
+vector<Rect> chosen_box;
 
 
 struct Region {
@@ -51,13 +51,17 @@ static void onMouse(int event, int x, int y, int flags, void* img) {
         chosen.X2 = x;
         chosen.Y2 = y;
         r = Rect(chosen.X1, chosen.Y1, chosen.X2 - chosen.X1, chosen.Y2 - chosen.Y1);
-        Iou = iou(r, chosen_box);
+        for (int i = 0; i < chosen_box.size(); i++) {
+            Iou.push_back(iou(r, chosen_box[i]));
+        }
         chosen.click = 0;
         return;
     }
 }
 
 int main() {
+    chosen.click = 0;
+
     const int n = 20; //Set n value
     const int max_score = 20; //Set max_score value
     float IOUthresh = 0.7f;
@@ -76,7 +80,7 @@ int main() {
         images.push_back(imread(join(DATA_FOLDER, to_string(i + 1) + ".jpg")));
     }
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < n; i++) {
         Detector det;
         cv::Mat img = images[i];
         std::vector<cv::Rect> boxes;
@@ -85,9 +89,13 @@ int main() {
         std::cout << "Start Detector\n";
         det.detect(img, 0.8f, 0.7f, boxes, proboblilities, classes, className);
 
-        std::string text = "Find " + className[0];
-        chosen_box = boxes[0];
-
+        string chose_name = className[classes[0]];
+        std::string text = "Find " + chose_name;
+        for (int i = 0; i < boxes.size(); i++) {
+            if (className[i] == chose_name) {
+                chosen_box.push_back(boxes[i]);
+            }
+        }
 
         if (score == max_score) {
             destroyWindow(text);
@@ -99,10 +107,11 @@ int main() {
             waitKey();
             break;
         }
-        Iou = -1.0f;
+        Iou.clear();
         boxes.clear();
         classes.clear();
         probs.clear();
+        className.clear();
 
         //ran = rand() % (n + 1 - counter);
         //counter++;
@@ -126,27 +135,30 @@ int main() {
             char key = waitKey(30);
             if (key == 27)break;
 
-            if (Iou != -1.0f) {
+            if (Iou.size() != 0) {
                 break;
             }
         }
         destroyWindow(text);
-
-        if (Iou >= IOUthresh) {
+        int k = 0;
+        for (int i = 0; i < Iou.size(); i++) {
+            if (Iou[i] >= IOUthresh)k++;
+        }
+        if (k!=0) {
             destroyWindow(text);
-
             score++;
             cout << "current score:" << score << "  target score:" << max_score << endl;
             Mat A = imread(join(DATA_FOLDER, "0.jpg"));
             putText(A, "RIGHT!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
             std::string result = "Score:" + std::to_string(score);
             putText(A, result, Point(180, 300), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 255), 4,3);
-            imshow("WIN", A);
+            imshow("RIGHT", A);
             waitKey();
+            destroyWindow("RIGHT");
+
         }
         else {
             destroyWindow(text);
-
             Mat A = imread(join(DATA_FOLDER, "0.jpg"));
             putText(A, "GAME OVER!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
             std::string result = "Score:" + std::to_string(score);
