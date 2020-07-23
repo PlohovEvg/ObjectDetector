@@ -87,8 +87,8 @@ void Detector::detect(const cv::Mat& image,
     Size = boxes.size();
     for (int i = 0; i < Size; i++) {
         cv::rectangle(img_copy, boxes[i], cv::Scalar(255, 0, 0), 2);
-        cv::putText(img_copy, cv::String(std::to_string(probabilities[i])+className[i]), cv::Point(boxes[i].x, boxes[i].y), 3, 1, cv::Scalar(0, 0, 255)/*, 0.5, 8, false*/);
-        std::cout << "ClassName = "<<className[i]<<"\tProb = "<<probabilities[i] <<"\tBoxesCoord = ["<<boxes[i].x<<","<<boxes[i].y<<"]\t height = "<<boxes[i].height<<"\tweight = "<<boxes[i].width<<"\n";
+        cv::putText(img_copy, cv::String(std::to_string(probabilities[i])+className[classes[i]]), cv::Point(boxes[i].x, boxes[i].y), 3, 1, cv::Scalar(0, 0, 255)/*, 0.5, 8, false*/);
+        std::cout << "ClassID = " << classes[i] <<"\tClassName = "<<className[i]<<"\tProb = "<<probabilities[i] <<"\tBoxesCoord = ["<<boxes[i].x<<","<<boxes[i].y<<"]\t height = "<<boxes[i].height<<"\tweight = "<<boxes[i].width<<"\n";
 
     }
     
