@@ -1,7 +1,8 @@
 #pragma once
 #include <opencv2/opencv.hpp>
 #include <inference_engine.hpp>
-
+using namespace cv;
+using namespace InferenceEngine;
 class Detector {
 public:
     Detector();
@@ -12,10 +13,7 @@ public:
         std::vector<cv::Rect>& boxes,
         std::vector<float>& probabilities,
         std::vector<unsigned>& classes);
-
-private:
-    InferenceEngine::InferRequest req;
-    std::string input_name , output_name;
+    Blob::Ptr wrapMat2Blob(const Mat& m);
 };
 
 float iou(const cv::Rect& a, const cv::Rect& b);
