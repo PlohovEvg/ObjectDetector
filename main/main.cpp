@@ -74,6 +74,9 @@ int main() {
     std::vector<std::string> className;
     int ranpic, ranbox;
     string chosen_class_name;
+    float sum=0;
+    int k = 0;
+    float start, finish;
     for (int i = 0; i < n; i++) {
         pic_indexes.push_back(i + 1);
     }
@@ -114,6 +117,8 @@ int main() {
             putText(A, "YOU WIN!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
             std::string result = "Score:" + std::to_string(score);
             putText(A, result, Point(180, 300), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 255), 4,3);
+            std::string time = "Average time: " + std::to_string(sum / k) + " s.";
+            putText(A, time, Point(10, 400), FONT_HERSHEY_COMPLEX_SMALL, 2, Scalar(0, 0, 0), 4, 3);
             imshow("WIN", A);
             waitKey();
             break;
@@ -123,7 +128,7 @@ int main() {
         classes.clear();
         probs.clear();
         className.clear();
-
+        start = clock();
         namedWindow(text, WINDOW_AUTOSIZE);
         setMouseCallback(text, onMouse);
 
@@ -135,11 +140,13 @@ int main() {
             if (key == 27)break;
 
             if (maxIOU != -1.0f) {
+                finish = clock();
                 break;
             }
         }
         destroyWindow(text);
-  
+        k++;
+        sum += ((finish - start) / CLOCKS_PER_SEC);
         if (maxIOU >= IOUthresh) {
             destroyWindow(text);
             score++;
@@ -148,6 +155,8 @@ int main() {
             putText(A, "RIGHT!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
             std::string result = "Score:" + std::to_string(score);
             putText(A, result, Point(180, 300), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 255), 4,3);
+            std::string time = "Time:  " + std::to_string((finish-start)/CLOCKS_PER_SEC)+ " s.";
+            putText(A, time, Point(10, 400), FONT_HERSHEY_COMPLEX_SMALL, 2, Scalar(0, 0, 0), 4, 3);
             imshow("RIGHT", A);
             waitKey();
             destroyWindow("RIGHT");
@@ -156,10 +165,13 @@ int main() {
         else {
             destroyWindow(text);
             Mat A = imread(join(DATA_FOLDER, "0.jpg"));
-            putText(A, "GAME OVER!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
+            putText(A, "WRONG!", Point(180, 100), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 0, 255),8,5);
             std::string result = "Score:" + std::to_string(score);
             putText(A, result, Point(180, 300), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 255), 4,3);
-            imshow("GAME OVER :(", A);
+
+            std::string time = "Average time: " + std::to_string(sum/k)+ " s.";
+            putText(A, time, Point(10, 400), FONT_HERSHEY_COMPLEX_SMALL, 2, Scalar(0, 0, 0), 4, 3);
+            imshow("WRONG", A);
             waitKey();
             break;
         }
