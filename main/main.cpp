@@ -52,7 +52,7 @@ static void onMouse(int event, int x, int y, int flags, void* img) {
 int main() {
     const int n = 20; //Set n value
     const int max_score = 7; //Set max_score value
-    float IOUthresh = 0.65f;
+    float IOUthresh = 0.55f;
     int ran, boxran;
     unsigned chosen_class;
     int score = 0;
@@ -118,6 +118,7 @@ int main() {
             putText(A, result, Point(180, 300), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 255), 4,3);
             std::string time = "Average time: " + std::to_string(sum / k) + " s.";
             putText(A, time, Point(10, 400), FONT_HERSHEY_COMPLEX_SMALL, 2, Scalar(0, 0, 0), 4, 3);
+			putText(A, "Press any key to continue...", Point(10, 410), FONT_HERSHEY_COMPLEX_SMALL, 0.8, Scalar(0, 0, 0), 1.9, 4);
             imshow("WIN", A);
             waitKey();
             break;
